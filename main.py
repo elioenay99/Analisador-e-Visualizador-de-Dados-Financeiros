@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, ConversationHandler, CallbackContext, \
     MessageHandler, Filters
+from formatarCSV import traduzir_e_formatar_csv
 from functions import fetch_stock_data, analyze_data, export_data, format_data_message, format_symbol
 from config import CHAVE_TELEGRAM as TOKEN
 import logging
@@ -91,6 +92,8 @@ def download_data(update: Update, context: CallbackContext):
     analyzed_df_full = analyze_data(df_full)
     file_path = f"{symbol}_full_data.csv"
     export_data(analyzed_df_full, file_path)
+    arquivo_saida = file_path
+    traduzir_e_formatar_csv(file_path, arquivo_saida)
     with open(file_path, 'rb') as file:
         context.bot.send_document(chat_id=query.message.chat_id, document=file, filename=file_path)
     query.message.delete()
