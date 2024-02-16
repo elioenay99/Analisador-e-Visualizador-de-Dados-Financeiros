@@ -3,6 +3,12 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, Conversa
     MessageHandler, Filters
 from functions import fetch_stock_data, analyze_data, export_data, format_data_message, format_symbol
 from config import CHAVE_TELEGRAM as TOKEN
+import logging
+import re
+
+# Configuração do logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 SYMBOL = 0
 
@@ -33,16 +39,25 @@ def button(update: Update, context: CallbackContext) -> int:
     return SYMBOL
 
 
+def is_valid_symbol(symbol):
+    """Valida se o símbolo da ação é alfanumérico e tem um comprimento razoável."""
+    return re.match(r'^[0-9A-Za-z.]{1,10}$', symbol)
+
+
 def get_symbol(update: Update, context: CallbackContext) -> int:
     symbol = update.message.text.upper()
+    if not is_valid_symbol(symbol):
+        update.message.reply_text("Símbolo da ação inválido. Por favor, verifique e tente novamente.")
+        return ConversationHandler.END
+
     is_brazilian = context.user_data["is_brazilian"]
     symbol = format_symbol(symbol, is_brazilian)
 
     try:
         df = fetch_stock_data(symbol)
     except Exception as e:
-        print(f"Erro ao buscar dados para {symbol}: {e}")
-        update.message.reply_text("Não foi possível encontrar dados para a ação especificada.")
+        logger.error(f"Erro ao buscar dados para {symbol}: {e}")
+        update.message.reply_text("Houve um erro ao buscar os dados. Por favor, verifique o símbolo e tente novamente.")
         return ConversationHandler.END
 
     if df.empty:
@@ -69,7 +84,7 @@ def download_data(update: Update, context: CallbackContext):
     try:
         df_full = fetch_stock_data(symbol, outputsize="full")
     except Exception as e:
-        print(f"Erro ao buscar dados para {symbol}: {e}")
+        logger.error(f"Erro ao buscar dados para {symbol}: {e}")
         query.message.reply_text("Não foi possível encontrar dados para a ação especificada.")
         return
 
@@ -81,7 +96,7 @@ def download_data(update: Update, context: CallbackContext):
     query.message.delete()
 
 
-def help(update: Update, context: CallbackContext) -> int:
+def ajuda(update: Update, context: CallbackContext) -> int:
     message = (
         "**Bem-vindo ao Bot de Pesquisa de Ações!**\n\n"
         "Este bot permite que você pesquise informações sobre ações brasileiras e internacionais.\n\n"
@@ -119,7 +134,7 @@ def main() -> None:
             SYMBOL: [CallbackQueryHandler(button, pattern='^(brazil|international)$'),
                      MessageHandler(Filters.text & ~Filters.command, get_symbol)],
         },
-        fallbacks=[CommandHandler('cancel', cancel), CommandHandler('help', help)]
+        fallbacks=[CommandHandler('cancel', cancel), CommandHandler('help', ajuda)]
     )
 
     dp.add_handler(conv_handler)

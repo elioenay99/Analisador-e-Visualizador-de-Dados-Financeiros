@@ -1,6 +1,11 @@
 import pandas as pd
 import requests
 from config import CHAVE as api_key
+import logging
+
+# Configuração do logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def fetch_stock_data(symbol, outputsize="compact"):
@@ -33,7 +38,7 @@ def fetch_stock_data(symbol, outputsize="compact"):
         else:
             return pd.DataFrame()  # Retorna um DataFrame vazio em caso de falha na obtenção dos dados.
     except Exception as e:
-        print(f"Erro ao buscar dados para {symbol}: {e}")
+        logger.error(f"Erro ao buscar dados para {symbol}: {e}")
         return pd.DataFrame()
 
 
@@ -62,7 +67,7 @@ def export_data(df, filename):
         filename (str): Nome do arquivo CSV.
     """
     df.to_csv(filename)
-    print(f"Dados exportados para {filename}.")
+    logger.info(f"Dados exportados para {filename}.")
 
 
 def format_data_message(df, symbol):
