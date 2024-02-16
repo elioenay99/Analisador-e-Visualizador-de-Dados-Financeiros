@@ -15,7 +15,6 @@ def fetch_stock_data(symbol, outputsize="compact"):
     response = requests.get(url, params=params)
     data = response.json()
 
-    # Assegure-se de ajustar este caminho conforme a estrutura exata do JSON retornado pela API que você está usando.
     if 'Time Series (Daily)' in data:
         df = pd.DataFrame.from_dict(data['Time Series (Daily)'], orient='index').astype(float)
         df.columns = ['open', 'high', 'low', 'close', 'volume']
