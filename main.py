@@ -1,16 +1,28 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from telegram.ext import Updater, CommandHandler, CallbackContext
+from functions import fetch_stock_data, analyze_data, export_data, format_data_message
+from config import CHAVE_TELEGRAM as TOKEN
 
 
-# Press the green button in the gutter to run the script.
+def fetch_data(update, context):
+    symbol = 'AAPL'  # Exemplo de símbolo de ação
+    df = fetch_stock_data(symbol)
+    analyzed_df = analyze_data(df)
+
+    # Utiliza a função format_data_message para formatar os dados
+    message = format_data_message(analyzed_df, symbol)
+
+    update.message.reply_text(message)
+
+
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("fetch_data", fetch_data))
+
+    updater.start_polling()
+    updater.idle()
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
